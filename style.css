@@ -1,0 +1,106 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: #1a1c23;
+    color: white;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+h1 {
+    color: #f3d05b;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px rgba(243, 208, 91, 0.5);
+}
+
+.container {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 1000px;
+    width: 100%;
+}
+
+/* Panel Profil & Leaderboard */
+.panel {
+    background: #252836;
+    border: 2px solid #3b3e51;
+    border-radius: 12px;
+    padding: 15px;
+    width: 280px;
+    text-align: left;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.panel h3 {
+    border-bottom: 2px solid #f3d05b;
+    padding-bottom: 5px;
+    margin-bottom: 15px;
+    color: #f3d05b;
+}
+
+.field {
+    margin-bottom: 12px;
+}
+
+.field label {
+    display: block;
+    font-size: 12px;
+    color: #a0a5b5;
+    margin-bottom: 4px;
+}
+
+.field input,
+.field select {
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #45495e;
+    background: #1a1c23;
+    color: white;
+}
+
+#highScoreText {
+    color: #4ef080;
+}
+
+/* Canvas Game */
+#gameCanvas {
+    background: #0f1115;
+    border: 3px solid #f3d05b;
+    border-radius: 12px;
+    cursor: crosshair;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    max-width: 100%;
+    height: auto;
+}
+
+.hint {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #a0a5b5;
+}
+
+ol {
+    padding-left: 20px;
+}
+
+li {
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #d0d4e4;
+}
+
+.score {
+    color: #f3d05b;
+}

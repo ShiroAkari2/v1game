@@ -4,30 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teyvat Arena: Element Rush</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background: #1a1c23; color: white; text-align: center; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; }
-        h1 { color: #f3d05b; margin-bottom: 10px; text-shadow: 0 0 10px rgba(243, 208, 91, 0.5); }
-        
-        .container { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; max-width: 1000px; width: 100%; }
-        
-        /* Panel Profil & Leaderboard */
-        .panel { background: #252836; border: 2px solid #3b3e51; border-radius: 12px; padding: 15px; width: 280px; text-align: left; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-        .panel h3 { border-bottom: 2px solid #f3d05b; padding-bottom: 5px; margin-bottom: 15px; color: #f3d05b; }
-        
-        .field { margin-bottom: 12px; }
-        .field label { display: block; font-size: 12px; color: #a0a5b5; margin-bottom: 4px; }
-        .field input, .field select { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #45495e; background: #1a1c23; color: white; }
-        
-        /* Canvas Game */
-        #gameCanvas { background: #0f1115; border: 3px solid #f3d05b; border-radius: 12px; cursor: crosshair; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-        
-        .btn { width: 100%; background: #f3d05b; color: #1a1c23; font-weight: bold; border: none; padding: 10px; border-radius: 6px; cursor: pointer; transition: 0.2s; margin-top: 5px; }
-        .btn:hover { background: #ffe380; transform: scale(1.02); }
-        
-        ol { padding-left: 20px; }
-        li { margin-bottom: 8px; font-size: 14px; color: #d0d4e4; }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -38,12 +15,12 @@
         <div class="panel">
             <h3>👤 Kartu Profil</h3>
             <div class="field">
-                <label>Nama Traveler:</label>
-                <input type="text" id="playerName" value="Traveler" onchange="saveProfile()">
+                <label for="playerName">Nama Traveler:</label>
+                <input type="text" id="playerName" value="Traveler" maxlength="20">
             </div>
             <div class="field">
-                <label>Vision (Elemen Utama):</label>
-                <select id="playerElement" onchange="saveProfile()">
+                <label for="playerElement">Vision (Elemen Utama):</label>
+                <select id="playerElement">
                     <option value="Pyro">🔥 Pyro (Api - Merah)</option>
                     <option value="Cryo">❄️ Cryo (Es - Biru Muda)</option>
                     <option value="Electro">⚡ Electro (Petir - Ungu)</option>
@@ -51,14 +28,14 @@
             </div>
             <div class="field">
                 <label>Skor Tertinggi Kamu:</label>
-                <h2 id="highScoreText" style="color: #4ef080;">0</h2>
+                <h2 id="highScoreText">0</h2>
             </div>
         </div>
 
         <!-- Canvas Tempat Game Dimainkan -->
         <div>
             <canvas id="gameCanvas" width="400" height="400"></canvas>
-            <p style="margin-top: 8px; font-size: 12px; color: #a0a5b5;">Arahkan kursor & Klik untuk menembak Slime!</p>
+            <p class="hint">Arahkan kursor &amp; klik untuk menembak Slime!</p>
         </div>
 
         <!-- Panel Leaderboard -->
@@ -70,209 +47,6 @@
         </div>
     </div>
 
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-
-        // State Profil & Game
-        let profile = { name: "Traveler", element: "Pyro", highScore: 0 };
-        let leaderboard = [];
-        let score = 0;
-        let gameOver = false;
-        let isPlaying = false;
-
-        // Entitas Game
-        const player = { x: 200, y: 200, radius: 15 };
-        let bullets = [];
-        let enemies = [];
-        let spawnInterval;
-
-        // Warna Elemen Genshin
-        const elementColors = {
-            Pyro: '#ff4d4d',
-            Cryo: '#80d4ff',
-            Electro: '#b366ff'
-        };
-
-        // Initialize Data dari LocalStorage (JSON)
-        function initData() {
-            const savedProfile = localStorage.getItem('teyvat_profile');
-            if (savedProfile) {
-                profile = JSON.parse(savedProfile);
-                document.getElementById('playerName').value = profile.name;
-                document.getElementById('playerElement').value = profile.element;
-                document.getElementById('highScoreText').innerText = profile.highScore;
-            }
-
-            const savedBoard = localStorage.getItem('teyvat_leaderboard');
-            if (savedBoard) {
-                leaderboard = JSON.parse(savedBoard);
-            } else {
-                // Dummy data untuk awal
-                leaderboard = [
-                    { name: "Paimon", score: 120, element: "Pyro" },
-                    { name: "Diluc", score: 80, element: "Pyro" },
-                    { name: "Kaeya", score: 50, element: "Cryo" }
-                ];
-            }
-            updateLeaderboardUI();
-        }
-
-        function saveProfile() {
-            profile.name = document.getElementById('playerName').value || "Traveler";
-            profile.element = document.getElementById('playerElement').value;
-            localStorage.setItem('teyvat_profile', JSON.stringify(profile));
-        }
-
-        // KONTROL GAME
-        canvas.addEventListener('click', (e) => {
-            if (!isPlaying) {
-                resetGame();
-                return;
-            }
-            const rect = canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
-
-            // Hitung sudut tembakan
-            const angle = Math.atan2(mouseY - player.y, mouseX - player.x);
-            bullets.push({
-                x: player.x,
-                y: player.y,
-                dx: Math.cos(angle) * 7,
-                dy: Math.sin(angle) * 7,
-                color: elementColors[profile.element]
-            });
-        });
-
-        function spawnEnemy() {
-            if (!isPlaying) return;
-            const radius = 12;
-            let x, y;
-            if (Math.random() < 0.5) {
-                x = Math.random() < 0.5 ? 0 - radius : canvas.width + radius;
-                y = Math.random() * canvas.height;
-            } else {
-                x = Math.random() * canvas.width;
-                y = Math.random() < 0.5 ? 0 - radius : canvas.height + radius;
-            }
-            const angle = Math.atan2(player.y - y, player.x - x);
-            enemies.push({ x, y, dx: Math.cos(angle) * 1.8, dy: Math.sin(angle) * 1.8, radius });
-        }
-
-        function resetGame() {
-            score = 0;
-            bullets = [];
-            enemies = [];
-            gameOver = false;
-            isPlaying = true;
-            clearInterval(spawnInterval);
-            spawnInterval = setInterval(spawnEnemy, 800);
-            animate();
-        }
-
-        function handleGameOver() {
-            isPlaying = false;
-            clearInterval(spawnInterval);
-            
-            // Simpan skor jika tembus High Score
-            if (score > profile.highScore) {
-                profile.highScore = score;
-                document.getElementById('highScoreText').innerText = score;
-                saveProfile();
-            }
-
-            // Masukkan ke Leaderboard
-            leaderboard.push({ name: profile.name, score: score, element: profile.element });
-            leaderboard.sort((a, b) => b.score - a.score);
-            leaderboard = leaderboard.slice(0, 5); // Ambil Top 5
-            localStorage.setItem('teyvat_leaderboard', JSON.stringify(leaderboard));
-            updateLeaderboardUI();
-        }
-
-        function updateLeaderboardUI() {
-            const listUI = document.getElementById('leaderboardList');
-            listUI.innerHTML = leaderboard.map(item => 
-                `<li><b>${item.name}</b> (${item.element}): <span style="color:#f3d05b">${item.score} pts</span></li>`
-            ).join('');
-        }
-
-        // MAIN GAME LOOP
-        function animate() {
-            if (!isPlaying) {
-                // Tampilan Start/Game Over Screen
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#f3d05b';
-                ctx.font = '20px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText(gameOver ? "GAME OVER! Klik untuk Main Lagi" : "KLIK UNTUK MULAI GAME", canvas.width / 2, canvas.height / 2);
-                return;
-            }
-
-            requestAnimationFrame(animate);
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Gambar Karakter Utama
-            ctx.beginPath();
-            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
-            ctx.fillStyle = elementColors[profile.element];
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = elementColors[profile.element];
-            ctx.fill();
-            ctx.shadowBlur = 0;
-
-            // Gambar Peluru
-            bullets.forEach((b, index) => {
-                b.x += b.dx;
-                b.y += b.dy;
-                ctx.beginPath();
-                ctx.arc(b.x, b.y, 5, 0, Math.PI * 2);
-                ctx.fillStyle = b.color;
-                ctx.fill();
-
-                if (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) {
-                    bullets.splice(index, 1);
-                }
-            });
-
-            // Gambar Musuh (Slime Hijau)
-            enemies.forEach((enemy, eIndex) => {
-                enemy.x += enemy.dx;
-                enemy.y += enemy.dy;
-
-                ctx.beginPath();
-                ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
-                ctx.fillStyle = '#4ef080';
-                ctx.fill();
-
-                // Cek Tabrakan Peluru x Musuh
-                bullets.forEach((b, bIndex) => {
-                    const dist = Math.hypot(b.x - enemy.x, b.y - enemy.y);
-                    if (dist < enemy.radius + 5) {
-                        enemies.splice(eIndex, 1);
-                        bullets.splice(bIndex, 1);
-                        score += 10;
-                    }
-                });
-
-                // Cek Tabrakan Musuh x Karakter Pemain (Game Over)
-                const distPlayer = Math.hypot(player.x - enemy.x, player.y - enemy.y);
-                if (distPlayer < enemy.radius + player.radius) {
-                    gameOver = true;
-                    handleGameOver();
-                }
-            });
-
-            // Gambar Skor Real-time
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '16px sans-serif';
-            ctx.textAlign = 'left';
-            ctx.fillText(`Skor: ${score}`, 15, 30);
-        }
-
-        initData();
-        animate();
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
