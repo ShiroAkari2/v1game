@@ -1,7 +1,7 @@
 'use strict';
 
 // Naikkan versi ini setiap kali kamu mengubah file game, supaya cache lama dibuang.
-const CACHE = 'stationary-shooter-v2';
+const CACHE = 'stationary-shooter-v3';
 const FILES = [
     './',
     './index.html',

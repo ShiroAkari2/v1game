@@ -3,19 +3,25 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Warna Elemen Genshin
-const elementColors = {
-    Pyro: '#ff4d4d',
-    Cryo: '#80d4ff',
-    Electro: '#b366ff'
+// 7 warna pelangi untuk karakter dan peluru
+const colors = {
+    Red: '#ff4d4d',
+    Orange: '#ff9f40',
+    Yellow: '#ffe14d',
+    Green: '#00c853',
+    Blue: '#4d9dff',
+    Indigo: '#6c5ce7',
+    Violet: '#c06cff'
 };
+
+// Data lama (versi elemen) dipetakan ke warna terdekat
+const legacyElements = { Pyro: 'Red', Cryo: 'Blue', Electro: 'Violet' };
 
 const BULLET_RADIUS = 5;
 const MAX_NAME_LENGTH = 20;
 
 // State Profil & Game
-let profile = { name: 'Traveler', element: 'Pyro', highScore: 0 };
-let leaderboard = [];
+let profile = { name: 'Player', color: 'Red', highScore: 0 };
 let score = 0;
 let gameOver = false;
 let isPlaying = false;
@@ -49,66 +55,65 @@ function saveJSON(key, value) {
 }
 
 function initData() {
-    const savedProfile = loadJSON('teyvat_profile');
-    if (savedProfile && typeof savedProfile === 'object') {
-        profile.name = String(savedProfile.name || 'Traveler').slice(0, MAX_NAME_LENGTH);
-        profile.element = elementColors[savedProfile.element] ? savedProfile.element : 'Pyro';
-        profile.highScore = Number.isFinite(savedProfile.highScore) ? savedProfile.highScore : 0;
-    }
-    document.getElementById('playerName').value = profile.name;
-    document.getElementById('playerElement').value = profile.element;
-    document.getElementById('highScoreText').textContent = profile.highScore;
+    const saved = loadJSON('teyvat_profile');
+    if (saved && typeof saved === 'object') {
+        const savedName = String(saved.name || '').slice(0, MAX_NAME_LENGTH);
+        profile.name = (savedName && savedName !== 'Traveler') ? savedName : 'Player';
 
-    const savedBoard = loadJSON('teyvat_leaderboard');
-    if (Array.isArray(savedBoard)) {
-        leaderboard = savedBoard
-            .filter(item => item && Number.isFinite(item.score))
-            .map(item => ({
-                name: String(item.name || 'Traveler').slice(0, MAX_NAME_LENGTH),
-                element: elementColors[item.element] ? item.element : 'Pyro',
-                score: item.score
-            }));
-    } else {
-        // Dummy data untuk awal
-        leaderboard = [
-            { name: 'Paimon', score: 120, element: 'Pyro' },
-            { name: 'Diluc', score: 80, element: 'Pyro' },
-            { name: 'Kaeya', score: 50, element: 'Cryo' }
-        ];
+        if (colors[saved.color]) {
+            profile.color = saved.color;
+        } else if (legacyElements[saved.element]) {
+            profile.color = legacyElements[saved.element];
+        }
+        profile.highScore = Number.isFinite(saved.highScore) ? saved.highScore : 0;
     }
-    updateLeaderboardUI();
+
+    // Papan peringkat sudah dihapus, buang datanya
+    try { localStorage.removeItem('teyvat_leaderboard'); } catch (e) { /* abaikan */ }
+
+    document.getElementById('playerName').value = profile.name;
+    document.getElementById('highScoreText').textContent = profile.highScore;
+    buildColorPicker();
 }
 
 function saveProfile() {
-    profile.name = document.getElementById('playerName').value.trim().slice(0, MAX_NAME_LENGTH) || 'Traveler';
-    profile.element = document.getElementById('playerElement').value;
+    profile.name = document.getElementById('playerName').value.trim().slice(0, MAX_NAME_LENGTH) || 'Player';
     saveJSON('teyvat_profile', profile);
 }
 
-function updateLeaderboardUI() {
-    const list = document.getElementById('leaderboardList');
-    list.textContent = '';
+/* ------------------------------------------------------------------ */
+/* Pilihan warna                                                       */
+/* ------------------------------------------------------------------ */
 
-    if (leaderboard.length === 0) {
-        const li = document.createElement('li');
-        li.textContent = 'Belum ada skor...';
-        list.appendChild(li);
-        return;
-    }
+function buildColorPicker() {
+    const picker = document.getElementById('colorPicker');
+    picker.textContent = '';
 
-    // Dibuat lewat DOM + textContent supaya aman dari XSS
-    leaderboard.forEach(item => {
-        const li = document.createElement('li');
+    Object.keys(colors).forEach(name => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'swatch';
+        btn.dataset.color = name;
+        btn.style.setProperty('--c', colors[name]);
+        btn.setAttribute('role', 'radio');
+        btn.setAttribute('aria-label', name);
+        btn.title = name;
+        btn.addEventListener('click', () => {
+            profile.color = name;
+            updateSwatches();
+            saveProfile();
+        });
+        picker.appendChild(btn);
+    });
 
-        const name = document.createElement('b');
-        name.textContent = item.name;
+    updateSwatches();
+}
 
-        const pts = document.createElement('span');
-        pts.className = 'score';
-        pts.textContent = `${item.score} pts`;
-
-        li.append(name, ` (${item.element}): `, pts);
-        list.appendChild(li);
+function updateSwatches() {
+    document.querySelectorAll('#colorPicker .swatch').forEach(btn => {
+        const active = btn.dataset.color === profile.color;
+        btn.classList.toggle('selected', active);
+        btn.setAttribute('aria-checked', active ? 'true' : 'false');
     });
 }
 
@@ -117,7 +122,6 @@ function updateLeaderboardUI() {
 /* ------------------------------------------------------------------ */
 
 document.getElementById('playerName').addEventListener('change', saveProfile);
-document.getElementById('playerElement').addEventListener('change', saveProfile);
 
 canvas.addEventListener('click', (e) => {
     if (!isPlaying) {
@@ -137,7 +141,7 @@ canvas.addEventListener('click', (e) => {
         y: player.y,
         dx: Math.cos(angle) * 7,
         dy: Math.sin(angle) * 7,
-        color: elementColors[profile.element]
+        color: colors[profile.color]
     });
 });
 
@@ -188,15 +192,6 @@ function handleGameOver() {
         document.getElementById('highScoreText').textContent = score;
         saveJSON('teyvat_profile', profile);
     }
-
-    // Masukkan ke Leaderboard (skor 0 tidak dicatat)
-    if (score > 0) {
-        leaderboard.push({ name: profile.name, score: score, element: profile.element });
-        leaderboard.sort((a, b) => b.score - a.score);
-        leaderboard = leaderboard.slice(0, 5); // Ambil Top 5
-        saveJSON('teyvat_leaderboard', leaderboard);
-        updateLeaderboardUI();
-    }
 }
 
 /* ------------------------------------------------------------------ */
@@ -225,9 +220,10 @@ function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Gambar Karakter Utama
+    const playerColor = colors[profile.color];
     ctx.shadowBlur = 15;
-    ctx.shadowColor = elementColors[profile.element];
-    drawCircle(player.x, player.y, player.radius, elementColors[profile.element]);
+    ctx.shadowColor = playerColor;
+    drawCircle(player.x, player.y, player.radius, playerColor);
     ctx.shadowBlur = 0;
 
     // Update & gambar peluru, buang yang keluar layar

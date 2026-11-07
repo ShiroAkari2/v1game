@@ -22,16 +22,12 @@
         <div class="panel">
             <h3>👤 Kartu Profil</h3>
             <div class="field">
-                <label for="playerName">Nama Traveler:</label>
-                <input type="text" id="playerName" value="Traveler" maxlength="20">
+                <label for="playerName">Name:</label>
+                <input type="text" id="playerName" value="Player" maxlength="20">
             </div>
             <div class="field">
-                <label for="playerElement">Vision (Elemen Utama):</label>
-                <select id="playerElement">
-                    <option value="Pyro">🔥 Pyro (Api - Merah)</option>
-                    <option value="Cryo">❄️ Cryo (Es - Biru Muda)</option>
-                    <option value="Electro">⚡ Electro (Petir - Ungu)</option>
-                </select>
+                <label id="colorLabel">Color:</label>
+                <div class="swatches" id="colorPicker" role="radiogroup" aria-labelledby="colorLabel"></div>
             </div>
             <div class="field">
                 <label>Skor Tertinggi Kamu:</label>
@@ -43,14 +39,6 @@
         <div>
             <canvas id="gameCanvas" width="400" height="400"></canvas>
             <p class="hint">Arahkan kursor &amp; klik untuk menembak Slime!</p>
-        </div>
-
-        <!-- Panel Leaderboard -->
-        <div class="panel">
-            <h3>🏆 Papan Peringkat</h3>
-            <ol id="leaderboardList">
-                <li>Belum ada skor...</li>
-            </ol>
         </div>
     </div>
 

@@ -31,7 +31,7 @@ h1 {
     width: 100%;
 }
 
-/* Panel Profil & Leaderboard */
+/* Panel Profil */
 .panel {
     background: #252836;
     border: 2px solid #3b3e51;
@@ -98,18 +98,30 @@ h1 {
     color: #a0a5b5;
 }
 
-ol {
-    padding-left: 20px;
+.swatches {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
 }
 
-li {
-    margin-bottom: 8px;
-    font-size: 14px;
-    color: #d0d4e4;
+.swatch {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    background: var(--c);
+    cursor: pointer;
+    padding: 0;
 }
 
-.score {
-    color: #f3d05b;
+.swatch.selected {
+    border-color: #ffffff;
+    box-shadow: 0 0 8px var(--c);
+}
+
+.swatch:focus-visible {
+    outline: 2px solid #f3d05b;
+    outline-offset: 2px;
 }
 
 /* Tampilan app di HP (area aman notch) & tap tanpa zoom */
