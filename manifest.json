@@ -1,0 +1,17 @@
+{
+  "name": "Stationary Shooter",
+  "short_name": "Stationary Shooter",
+  "description": "Top-down arena survival shooter oleh ShiroAkari. Tembak Slime dengan Vision pilihanmu.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1a1c23",
+  "theme_color": "#1a1c23",
+  "lang": "id",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
